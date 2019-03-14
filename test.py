@@ -79,7 +79,7 @@ class TestCase(unittest.TestCase):
 
 		# Find all empty cursor
 		documents_2 = self.db.query("collection_two").find({"XYZ": 2}).first()
-		self.assertEqual(type(documents_2), {})
+		self.assertEqual(type(documents_2), dict)
 
 	def test_05_find_all(self):
 		documents = self.db.query("collection_two").find().all()
