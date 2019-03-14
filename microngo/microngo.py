@@ -4,7 +4,11 @@ from pymongo.command_cursor import CommandCursor
 
 class Microngo():
 	def __init__(self, *args, **kwargs):
-		# Variables
+		'''
+		:param str db: Database name. This param is optional, you can use :func:`~microngo.Microngo.database` to set current database.
+		:type db: str or None
+		'''
+
 		self.collection	= None
 		self._db_name	= None
 
@@ -22,7 +26,12 @@ class Microngo():
 			self.db = self.client[self._db_name]
 
 	def database(self, database):
-		# Set database
+		'''Set current database
+
+		:param str database: Database name
+		:return: :class:`~microngo.Microngo`
+		'''
+
 		self.db = self.client[database]
 		return self
 
@@ -31,16 +40,34 @@ class Microngo():
 			self.collection = self.db[collection]
 			return self.collection 
 		else:
-			raise Exception("Database not found, please set database first.")
+			raise Exception("database not found, please set database name.")
 
 	def query(self, collection):
+		'''Create query object
+
+		:param str collection: Collection name
+		:return: :class:`~microngo.Query`
+		'''
+
 		return Query(self._collection(collection))
 	
 	def insert(self, collection):
+		'''Insert into collection
+
+		:param str collection: Collection name
+		:return: :class:`~microngo.Document`
+		'''
+
 		return Document(self._collection(collection))
 
 class Document():
 	def __init__(self, collection, data=None):
+		'''
+		:param obj collection: PyMongo collection object
+		:param str data: Data for document
+		:type data: dict or None
+		'''
+
 		# Variables
 		self.microngo_collection	= collection
 		self.microngo_payloads		= []
@@ -55,7 +82,7 @@ class Document():
 				# Update data
 				self.__dict__.update(data)
 			else:
-				raise Exception("zzz")
+				raise Exception("%s can't process non 'dict' data.", self.__name__)
 
 	def __getattr__(self, name):
 		return None
@@ -74,17 +101,23 @@ class Document():
 		# Cache variable
 		cache_collection	= self.microngo_collection
 		cache_payloads		= self.microngo_payloads
+		cache_document_id	= self.microngo_document_id
 		
 		# Clear self variables
 		payloads = self.__dict__
 		payloads.clear()
 		
 		# Reasign internal variables from cache
-		payloads['microngo_collection']	= cache_collection
-		payloads['microngo_payloads']	= cache_payloads
+		payloads['microngo_collection']		= cache_collection
+		payloads['microngo_payloads']		= cache_payloads
+		payloads['microngo_document_id']	= cache_document_id
 		return self
 
 	def add(self):
+		'''
+		Add document to list, then insert to collection with insert_many function.
+		'''
+
 		if not self.microngo_document_id:
 			# Get payloads
 			payloads = self._get_payloads()
@@ -97,10 +130,21 @@ class Document():
 			return self
 
 	def raw(self):
-		# Get raw data
+		'''
+		Get raw data or dict from document.
+
+		:return: dict
+		'''
+
 		return self._get_payloads()
 
 	def save(self):
+		'''
+		Save document to collection.
+
+		:return: str or ObjectID
+		'''
+
 		if self.microngo_document_id:
 			# Update
 			self.microngo_collection.update_one(
@@ -108,48 +152,84 @@ class Document():
 				{'$set': self._get_payloads()},
 				upsert=False
 			)
+			return self.microngo_document_id
 		else:
 			# Insert
 			if len(self.microngo_payloads) > 0:
 				data = self.microngo_payloads
 				return self.microngo_collection.insert_many(data).inserted_ids
 			else:
-				data = self._get_payloads()
-				return self.microngo_collection.insert_one(data).inserted_id
+				data	= self._get_payloads()
+				doc_id	= self.microngo_collection.insert_one(data).inserted_id
+				self.microngo_document_id = doc_id
+				return doc_id
 
 	def remove(self):
+		'''
+		Remove document from collection.
+		'''
+
 		if self.microngo_document_id:
 			# Delete
 			self.microngo_collection.delete_one({'_id': self.microngo_document_id})
 
 class Query():
 	def __init__(self, collection, cursor=None):
+		'''
+		:param obj collection: PyMongo collection object
+		:param obj cursor: PyMongo cursor object
+		:type cursor: obj or None
+		'''
+
 		self.collection = collection
 		self.cursor		= cursor
 
 	def __getattr__(self, name):
+		# Handle pymongo collection's method
 		def method(*args, **kwargs):
-			func = getattr(self.collection, name)
+			if self._cursor_iterable():
+				func = getattr(self.cursor, name)
+			else:
+				func = getattr(self.collection, name)
+			
 			self.cursor = func(*args, **kwargs)
 			return self
 
 		return method
 
 	def _cursor_iterable(self):
+		# Is cursor iterable
 		return isinstance(self.cursor, Cursor) \
 			or isinstance(self.cursor, CommandCursor)
 
 	def _document(self, data):
+		# Create document object
 		return Document(self.collection, data)
 
 	def find_by(self, **kwargs):
+		'''
+		:return: :class:`~microngo.Query`
+		'''
+
 		self.cursor = self.collection.find(kwargs)
 		return self
 
 	def raw(self):
+		'''
+		Get raw result.
+
+		:return: raw result from PyMongo
+		'''
 		return self.cursor
 
 	def one(self):
+		'''
+		Get single document.
+		
+		:return: :class:`~microngo.Document` or None
+		:raises Exception: if the result type isn't dict
+		'''
+
 		if isinstance(self.cursor, dict):
 			return self._document(self.cursor)
 
@@ -157,11 +237,20 @@ class Query():
 			return {}
 
 		else:
-			raise Exception("return type is not 'dict'")
+			raise Exception("cursor type is '%s'" % (type(self.cursor)))
 	
 	def first(self):
+		'''
+		Get first document from list or from single document result.
+		
+		:return: :class:`~microngo.Document` or None
+		:raises Exception: if the result type isn't dict and not iterable
+		'''
+
 		if self._cursor_iterable():
-			return self._document(list(self.cursor)[0])
+			data = list(self.cursor)
+			if len(data) > 0:
+				return self._document(data[0])
 
 		elif isinstance(self.cursor, dict):
 			return self.one()
@@ -170,9 +259,16 @@ class Query():
 			return {}
 
 		else:
-			raise Exception("return type is '%s'" %s (type(self.cursor)))
+			raise Exception("cursor type is '%s'" % (type(self.cursor)))
 
 	def all(self):
+		'''
+		Get all document in list.
+		
+		:return: list of :class:`~microngo.Document` or None
+		:raises Exception: if the result is not iterable
+		'''
+
 		documents = []
 		if self._cursor_iterable():
 			for i in self.cursor:
@@ -182,6 +278,6 @@ class Query():
 			return []
 
 		else:
-			raise Exception("return type is '%s'" % (type(self.cursor)))
+			raise Exception("cursor type is '%s'" % (type(self.cursor)))
 			
 		return documents

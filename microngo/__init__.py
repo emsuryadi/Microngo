@@ -1,1 +1,1 @@
-from .microngo import Microngo
+from .microngo import Microngo, Document, Query
