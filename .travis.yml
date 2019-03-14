@@ -5,6 +5,7 @@ python:
 # command to install dependencies
 install:
   - "pip install -r requirements-test.txt"
+  - "pip install coveralls"
   - "python3 setup.py install"
 
 # add mongodb service
