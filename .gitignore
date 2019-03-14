@@ -1,0 +1,6 @@
+build
+dist
+labs
+Microngo.*
+venv
+__pycache__
