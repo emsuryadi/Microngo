@@ -11,6 +11,7 @@ class Microngo():
 
 		self.collection	= None
 		self._db_name	= None
+		self.db			= None
 
 		# Get database name and remove it
 		database = kwargs.get("db")
@@ -81,8 +82,6 @@ class Document():
 					self.microngo_document_id = data.get("_id")
 				# Update data
 				self.__dict__.update(data)
-			else:
-				raise Exception("%s can't process non 'dict' data.", self.__name__)
 
 	def __getattr__(self, name):
 		return None
@@ -251,6 +250,8 @@ class Query():
 			data = list(self.cursor)
 			if len(data) > 0:
 				return self._document(data[0])
+			else:
+				return {}
 
 		elif isinstance(self.cursor, dict):
 			return self.one()
@@ -279,5 +280,5 @@ class Query():
 
 		else:
 			raise Exception("cursor type is '%s'" % (type(self.cursor)))
-			
+
 		return documents

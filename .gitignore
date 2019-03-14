@@ -4,3 +4,4 @@ labs
 Microngo.*
 venv
 __pycache__
+.coverage
