@@ -7,13 +7,13 @@ Microngo is small, fast, and lightweight MongoDB toolkit for python.
 
 ### Install
 
-Install using Python PIP
+Install using PIP:
 
-pip install Microngo
+	pip install Microngo
 
-or download this repository and run setup.py
+or install from source:
 
-python setup.py install
+	python setup.py install
 
 ### Documentation
 
