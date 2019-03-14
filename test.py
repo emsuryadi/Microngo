@@ -75,6 +75,11 @@ class TestCase(unittest.TestCase):
 			.skip(0).limit(5).first()
 		self.assertEqual(type(document), Document)
 		self.assertEqual(document.No, 5)
+		self.assertEqual(document.Empty, None)
+
+		# Find all empty cursor
+		documents_2 = self.db.query("collection_two").find({"XYZ": 2}).first()
+		self.assertEqual(type(documents_2), {})
 
 	def test_05_find_all(self):
 		documents = self.db.query("collection_two").find().all()
