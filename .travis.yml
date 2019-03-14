@@ -1,0 +1,19 @@
+language: python
+python:
+  - "3.5"
+
+# command to install dependencies
+install:
+  - "pip install -r requirements-test.txt"
+  - "python3 setup.py install"
+
+# add mongodb service
+services:
+  - mongodb
+
+# command to run tests
+script: "nosetests -v --with-coverage --cover-package=microngo test.py"
+
+# coveralls
+after_success:
+  coveralls
