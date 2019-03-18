@@ -266,7 +266,7 @@ class Query():
 		'''
 		Get all document in list.
 		
-		:return: list of :class:`~microngo.Document` or None
+		:return: list of :class:`~microngo.Document` or []
 		:raises Exception: if the result is not iterable
 		'''
 
