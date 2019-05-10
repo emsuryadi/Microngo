@@ -65,7 +65,25 @@ suryadi_data = db.query("Contact").find_by(Name="Suryadi").first()
 if suryadi_data:
 	suryadi_data.Name = "Em Suryadi"
 	suryadi_data.save()
-	print("Update ID", suryadi_data._id)
+	print("Update ID:", suryadi_data._id)
+
+print()
+
+#
+# Paginate
+#
+
+paginated_data = db.query("Calls").find().paginate(1, per_page=2)
+# Info
+print("Total Pages:", paginated_data.pages)
+print("Current page:", paginated_data.page)
+print("Has next page:", paginated_data.has_next())
+print("Next page:", paginated_data.next_num)
+print("Has prev page:", paginated_data.has_prev())
+print("Prev page:", paginated_data.prev_num)
+# Item
+for call in paginated_data.items:
+	print("Call No", call.No)
 
 print()
 
@@ -73,14 +91,7 @@ print()
 # Delete data
 #
 
-calls_data = db.query("Calls").find().limit(5).sort('No', 1).all()
+calls_data = db.query("Calls").find().sort('No', 1).all()
 for call in calls_data:
 	print("Call No", call.No)
 	call.remove()
-
-#
-# Paginate
-#
-s = time()
-paginated_data = db.query("Calls").find().paginate(1, per_page=5)
-print("Time:", time()-s)

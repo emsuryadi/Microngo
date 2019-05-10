@@ -87,6 +87,22 @@ Microngo example::
 		print("Update ID", suryadi_data._id)
 
 	#
+	# Paginate
+	#
+
+	paginated_data = db.query("Calls").find().paginate(1, per_page=2)
+	# Info
+	print("Total Pages:", paginated_data.pages)
+	print("Current page:", paginated_data.page)
+	print("Has next page:", paginated_data.has_next())
+	print("Next page:", paginated_data.next_num)
+	print("Has prev page:", paginated_data.has_prev())
+	print("Prev page:", paginated_data.prev_num)
+	# Item
+	for call in paginated_data.items:
+		print("Call No", call.No)
+
+	#
 	# Delete data
 	#
 
@@ -107,6 +123,9 @@ API
 
 
 .. autoclass:: microngo.Document
+	:members:
+
+.. autoclass:: microngo.Pagination
 	:members:
 
 

@@ -288,7 +288,7 @@ class Query(object):
 		'''
 		Crate pagination query
 		
-		:return: :class:`~pagination.Pagination` or None
+		:return: :class:`~microngo.Pagination` or None
 		'''
 		if page < 1:
 			return None
