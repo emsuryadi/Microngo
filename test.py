@@ -1,4 +1,4 @@
-from microngo import Microngo, Query, Document
+from microngo import Microngo, Query, Document, Pagination
 from datetime import datetime
 from bson.objectid import ObjectId
 from random import randrange
@@ -88,7 +88,24 @@ class TestCase(unittest.TestCase):
 		for i in documents:
 			self.assertEqual(type(i.No), int)
 
-	def test_06_raw(self):
+	def test_06_pagination(self):
+		# Normal state
+		documents = self.db.query("collection_two").find().paginate(1)
+		self.assertEqual(type(documents), Pagination)
+		# If page below 1
+		documents_2 = self.db.query("collection_two").find().paginate(0, per_page=20)
+		self.assertEqual(documents_2, None)
+		# If result empty and page higher than 1
+		documents_3 = self.db.query("collection_two").find({"No": 100}).paginate(2)
+		self.assertEqual(documents_3, None)
+		# Get info from pagination
+		self.assertEqual(type(documents.pages), int)
+		self.assertEqual(type(documents.next_num), int)
+		self.assertEqual(type(documents.has_next()), bool)
+		self.assertEqual(type(documents.prev_num), int)
+		self.assertEqual(type(documents.has_prev()), bool)
+
+	def test_07_raw(self):
 		document	= self.db.query("collection_two").find_by()
 		raw_query	= document.raw()
 		docs		= document.first()
@@ -97,7 +114,7 @@ class TestCase(unittest.TestCase):
 		self.assertEqual(type(docs), Document)
 		self.assertEqual(type(raw_docs), dict)
 		
-	def test_07_update(self):
+	def test_08_update(self):
 		documents = self.db.query("collection_two").find().all()
 		self.assertEqual(type(documents), list)
 		# Check per item
@@ -107,7 +124,7 @@ class TestCase(unittest.TestCase):
 			result = i.save()
 			self.assertEqual(type(result), ObjectId)
 	
-	def test_08_error_test(self):
+	def test_09_error_test(self):
 		# Test db error
 		with self.assertRaises(Exception) as ctx:
 			self.db2.query("collection_two").find().all()
@@ -138,7 +155,7 @@ class TestCase(unittest.TestCase):
 		with self.assertRaises(Exception) as ctx:
 			doc_all_b = self.db.query("collection_one").find_one().all()
 		
-	def test_09_delete(self):
+	def test_10_delete(self):
 		# Delete one
 		document = self.db.query("collection_one").find_one().one()
 		self.assertEqual(type(document), Document)

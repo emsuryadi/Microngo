@@ -1,8 +1,9 @@
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 from pymongo.command_cursor import CommandCursor
+from microngo.pagination import Pagination
 
-class Microngo():
+class Microngo(object):
 	def __init__(self, *args, **kwargs):
 		'''
 		:param str db: Database name. This param is optional, you can use :func:`~microngo.Microngo.database` to set current database.
@@ -61,7 +62,7 @@ class Microngo():
 
 		return Document(self._collection(collection))
 
-class Document():
+class Document(object):
 	def __init__(self, collection, data=None):
 		'''
 		:param obj collection: PyMongo collection object
@@ -70,16 +71,16 @@ class Document():
 		'''
 
 		# Variables
-		self.microngo_collection	= collection
-		self.microngo_payloads		= []
-		self.microngo_document_id	= None
+		self._microngo_collection	= collection
+		self._microngo_payloads		= []
+		self._microngo_document_id	= None
 
 		# Dict data
 		if data:
 			if isinstance(data, dict):
 				# Set documen id if exist
 				if data.get("_id"):
-					self.microngo_document_id = data.get("_id")
+					self._microngo_document_id = data.get("_id")
 				# Update data
 				self.__dict__.update(data)
 
@@ -91,25 +92,25 @@ class Document():
 		payloads = dict(self.__dict__)
 
 		# Remove internal variables and return data
-		del payloads['microngo_collection']
-		del payloads['microngo_payloads']
-		del payloads['microngo_document_id']
+		del payloads['_microngo_collection']
+		del payloads['_microngo_payloads']
+		del payloads['_microngo_document_id']
 		return payloads
 
 	def _clear_payloads(self):
 		# Cache variable
-		cache_collection	= self.microngo_collection
-		cache_payloads		= self.microngo_payloads
-		cache_document_id	= self.microngo_document_id
+		cache_collection	= self._microngo_collection
+		cache_payloads		= self._microngo_payloads
+		cache_document_id	= self._microngo_document_id
 		
 		# Clear self variables
 		payloads = self.__dict__
 		payloads.clear()
 		
 		# Reasign internal variables from cache
-		payloads['microngo_collection']		= cache_collection
-		payloads['microngo_payloads']		= cache_payloads
-		payloads['microngo_document_id']	= cache_document_id
+		payloads['_microngo_collection']	= cache_collection
+		payloads['_microngo_payloads']		= cache_payloads
+		payloads['_microngo_document_id']	= cache_document_id
 		return self
 
 	def add(self):
@@ -117,12 +118,12 @@ class Document():
 		Add document to list, then insert to collection with insert_many function.
 		'''
 
-		if not self.microngo_document_id:
+		if not self._microngo_document_id:
 			# Get payloads
 			payloads = self._get_payloads()
 
 			# Append to cache
-			self.microngo_payloads.append(payloads)
+			self._microngo_payloads.append(payloads)
 
 			# Clear previous payload and return
 			self._clear_payloads()
@@ -141,26 +142,26 @@ class Document():
 		'''
 		Save document to collection.
 
-		:return: str or ObjectID
+		:return: list of OjectId or single ObjectId
 		'''
 
-		if self.microngo_document_id:
+		if self._microngo_document_id:
 			# Update
-			self.microngo_collection.update_one(
-				{'_id': self.microngo_document_id},
+			self._microngo_collection.update_one(
+				{'_id': self._microngo_document_id},
 				{'$set': self._get_payloads()},
 				upsert=False
 			)
-			return self.microngo_document_id
+			return self._microngo_document_id
 		else:
 			# Insert
-			if len(self.microngo_payloads) > 0:
-				data = self.microngo_payloads
-				return self.microngo_collection.insert_many(data).inserted_ids
+			if len(self._microngo_payloads) > 0:
+				data = self._microngo_payloads
+				return self._microngo_collection.insert_many(data).inserted_ids
 			else:
 				data	= self._get_payloads()
-				doc_id	= self.microngo_collection.insert_one(data).inserted_id
-				self.microngo_document_id = doc_id
+				doc_id	= self._microngo_collection.insert_one(data).inserted_id
+				self._microngo_document_id = doc_id
 				return doc_id
 
 	def remove(self):
@@ -168,11 +169,11 @@ class Document():
 		Remove document from collection.
 		'''
 
-		if self.microngo_document_id:
+		if self._microngo_document_id:
 			# Delete
-			self.microngo_collection.delete_one({'_id': self.microngo_document_id})
+			self._microngo_collection.delete_one({'_id': self._microngo_document_id})
 
-class Query():
+class Query(object):
 	def __init__(self, collection, cursor=None):
 		'''
 		:param obj collection: PyMongo collection object
@@ -282,3 +283,20 @@ class Query():
 			raise Exception("cursor type is '%s'" % (type(self.cursor)))
 
 		return documents
+
+	def paginate(self, page, per_page=20):
+		'''
+		Crate pagination query
+		
+		:return: :class:`~pagination.Pagination` or None
+		'''
+		if page < 1:
+			return None
+
+		total = self.cursor.count()
+		items = self.skip((page - 1) * per_page).limit(per_page).all()
+
+		if len(items) < 1 and page != 1:
+			return None
+
+		return Pagination(self, page, per_page, total, items)

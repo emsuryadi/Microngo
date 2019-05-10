@@ -32,4 +32,4 @@ Install requirements and package:
 
 Test:
 
-	nosetests -v --with-coverage --cover-package=microngo test.py
+	nosetests -v --with-coverage --cover-erase --cover-package=microngo test.py

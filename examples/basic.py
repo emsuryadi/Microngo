@@ -1,6 +1,7 @@
 from microngo import Microngo
 from datetime import datetime
 from random import randrange
+from time import time
 
 #
 # Client
@@ -76,3 +77,10 @@ calls_data = db.query("Calls").find().limit(5).sort('No', 1).all()
 for call in calls_data:
 	print("Call No", call.No)
 	call.remove()
+
+#
+# Paginate
+#
+s = time()
+paginated_data = db.query("Calls").find().paginate(1, per_page=5)
+print("Time:", time()-s)
