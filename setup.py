@@ -3,7 +3,7 @@
 import setuptools
 from distutils.core import setup
 
-VERSION				= '0.1.0'
+VERSION				= '0.1.1'
 DESCRIPTION			= 'Microngo is small, fast, and lightweight MongoDB toolkit for python'
 LONG_DESCRIPTION	= open('README.md', 'r').read()
 
