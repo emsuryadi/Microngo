@@ -10,9 +10,9 @@ class Microngo(object):
 		:type db: str or None
 		'''
 
-		self.collection	= None
-		self._db_name	= None
-		self.db			= None
+		self.collection = None
+		self._db_name = None
+		self.db = None
 
 		# Get database name and remove it
 		database = kwargs.get("db")
@@ -71,9 +71,9 @@ class Document(object):
 		'''
 
 		# Variables
-		self._microngo_collection	= collection
-		self._microngo_payloads		= []
-		self._microngo_document_id	= None
+		self._microngo_collection = collection
+		self._microngo_payloads = []
+		self._microngo_document_id = None
 
 		# Dict data
 		if data:
@@ -99,18 +99,18 @@ class Document(object):
 
 	def _clear_payloads(self):
 		# Cache variable
-		cache_collection	= self._microngo_collection
-		cache_payloads		= self._microngo_payloads
-		cache_document_id	= self._microngo_document_id
-		
+		cache_collection = self._microngo_collection
+		cache_payloads = self._microngo_payloads
+		cache_document_id = self._microngo_document_id
+
 		# Clear self variables
 		payloads = self.__dict__
 		payloads.clear()
-		
+
 		# Reasign internal variables from cache
-		payloads['_microngo_collection']	= cache_collection
-		payloads['_microngo_payloads']		= cache_payloads
-		payloads['_microngo_document_id']	= cache_document_id
+		payloads['_microngo_collection'] = cache_collection
+		payloads['_microngo_payloads'] = cache_payloads
+		payloads['_microngo_document_id'] = cache_document_id
 		return self
 
 	def add(self):
@@ -182,7 +182,7 @@ class Query(object):
 		'''
 
 		self.collection = collection
-		self.cursor		= cursor
+		self.cursor = cursor
 
 	def __getattr__(self, name):
 		# Handle pymongo collection's method
@@ -191,7 +191,7 @@ class Query(object):
 				func = getattr(self.cursor, name)
 			else:
 				func = getattr(self.collection, name)
-			
+
 			self.cursor = func(*args, **kwargs)
 			return self
 
@@ -225,7 +225,7 @@ class Query(object):
 	def one(self):
 		'''
 		Get single document.
-		
+
 		:return: :class:`~microngo.Document` or None
 		:raises Exception: if the result type isn't dict
 		'''
@@ -242,7 +242,7 @@ class Query(object):
 	def first(self):
 		'''
 		Get first document from list or from single document result.
-		
+
 		:return: :class:`~microngo.Document` or None
 		:raises Exception: if the result type isn't dict and not iterable
 		'''
@@ -266,7 +266,7 @@ class Query(object):
 	def all(self):
 		'''
 		Get all document in list.
-		
+
 		:return: list of :class:`~microngo.Document` or []
 		:raises Exception: if the result is not iterable
 		'''
@@ -287,7 +287,7 @@ class Query(object):
 	def paginate(self, page, per_page=20):
 		'''
 		Crate pagination query
-		
+
 		:return: :class:`~microngo.Pagination` or None
 		'''
 		if page < 1:
